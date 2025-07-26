@@ -1,0 +1,56 @@
+{
+  "rtmp": {
+    "port": 1935,
+    "_comment_port": "RTMP服务器监听端口，OBS推流到此端口",
+    "chunk_size": 60000,
+    "_comment_chunk_size": "RTMP数据块大小",
+    "gop_cache": true,
+    "_comment_gop_cache": "是否缓存GOP（Group of Pictures），用于快速播放",
+    "ping": 30,
+    "_comment_ping": "RTMP连接ping间隔（秒）",
+    "ping_timeout": 60,
+    "_comment_ping_timeout": "RTMP连接ping超时（秒）"
+  },
+  "http": {
+    "port": 8000,
+    "_comment_port": "HTTP服务器监听端口，用于提供FLV/HLS流",
+    "allow_origin": "*",
+    "_comment_allow_origin": "允许跨域访问的源，'*'表示允许所有"
+  },
+  "webSocket": {
+    "port": 8001,
+    "_comment_port": "WebRTC信令服务器监听端口",
+    "allow_origin": "*",
+    "_comment_allow_origin": "允许跨域访问的源，'*'表示允许所有"
+  },
+  "trans": {
+    "ffmpegPath": "./ffmpeg/bin/ffmpeg.exe",
+    "_comment_ffmpegPath": "FFmpeg 可执行文件路径，用于视频转码（HLS/WebRTC需要）",
+    "tasks": [
+      {
+        "app": "live",
+        "_comment_app": "应用名称，OBS推流地址的一部分（rtmp://localhost:port/app/streamkey）",
+        "vc": "libx264",
+        "_comment_vc": "视频编码器",
+        "vcParam": ["-preset", "fast", "-crf", "23", "-profile:v", "main", "-level", "3.1"],
+        "_comment_vcParam": "视频编码参数",
+        "ac": "aac",
+        "_comment_ac": "音频编码器",
+        "acParam": ["-ab", "128k", "-ar", "44100", "-ac", "2"],
+        "_comment_acParam": "音频编码参数",
+        "rtmp": true,
+        "_comment_rtmp": "是否启用RTMP转发",
+        "rtmpApp": "live",
+        "_comment_rtmpApp": "RTMP转发的应用名称",
+        "webrtc": true,
+        "_comment_webrtc": "是否启用WebRTC转码（需要FFmpeg）"
+      }
+    ]
+  },
+  "streamKey": "streamkey",
+  "_comment_streamKey": "OBS推流码，例如：rtmp://localhost:1935/live/streamkey 中的 'streamkey'",
+  "webPlayerPort": 8002,
+  "_comment_webPlayerPort": "网页播放器访问端口，浏览器访问 http://localhost:8002",
+  "flvStreamUrl": "http://localhost:8000/live/streamkey.flv",
+  "_comment_flvStreamUrl": "网页播放器默认加载的FLV流URL"
+}

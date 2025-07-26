@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBS 网页推流</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 保持视频比例并适应容器 */
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <video id="streamVideo" autoplay muted></video>
+
+    <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.11/dist/hls.min.js"></script>
+    <script>
+        const videoElement = document.getElementById('streamVideo');
+
+        // 默认播放FLV流，由服务器注入
+        const streamUrl = "[[FLV_STREAM_URL]]"; // 占位符
+
+        function loadStream() {
+            if (streamUrl === "[[FLV_STREAM_URL]]") {
+                // 如果是占位符，则使用默认值或提示
+                console.warn("FLV_STREAM_URL 占位符未被替换，使用默认值。");
+                // 可以选择弹窗提示用户，或者使用一个硬编码的默认值
+                // alert("FLV 流URL未配置，请检查服务器设置。");
+                // return;
+            }
+
+            if (streamUrl.endsWith('.flv')) {
+                if (flvjs.isSupported()) {
+                    const flvPlayer = flvjs.createPlayer({
+                        type: 'flv',
+                        url: streamUrl
+                    });
+                    flvPlayer.attachMediaElement(videoElement);
+                    flvPlayer.load();
+                    flvPlayer.play().catch(error => {
+                        console.error("FLV 播放失败:", error);
+                        if (error.name === 'NotAllowedError') {
+                            alert("视频播放被浏览器阻止。请点击视频区域以播放。");
+                            // statusDiv.textContent = "请点击视频区域以播放。"; // statusDiv 已移除
+                        } else {
+                            alert("FLV 播放失败，请检查URL或浏览器权限。");
+                            // statusDiv.textContent = "FLV 播放失败，请检查URL或浏览器权限。"; // statusDiv 已移除
+                        }
+                    });
+                    flvPlayer.on(flvjs.Events.ERROR, (errorType, errorDetail) => {
+                        console.error('FLV.js error:', errorType, errorDetail);
+                        // statusDiv.textContent = `FLV 播放错误: ${errorType} - ${errorDetail}`; // statusDiv 已移除
+                    });
+                } else {
+                    alert("您的浏览器不支持 FLV 播放。");
+                }
+            } else if (streamUrl.endsWith('.m3u8')) {
+                if (Hls.isSupported()) {
+                    const hlsPlayer = new Hls();
+                    hlsPlayer.loadSource(streamUrl);
+                    hlsPlayer.attachMedia(videoElement);
+                    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
+                        videoElement.play().catch(error => {
+                            console.error("HLS 播放失败:", error);
+                            alert("HLS 播放失败，请检查URL或浏览器权限。");
+                        });
+                    });
+                    hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
+                        console.error('HLS.js error:', data);
+                        alert(`HLS 播放错误: ${data.type} - ${data.details}`);
+                    });
+                } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                    // 浏览器原生支持HLS (Safari)
+                    videoElement.src = streamUrl;
+                    videoElement.play().catch(error => {
+                        console.error("HLS 播放失败:", error);
+                        alert("HLS 播放失败，请检查URL或浏览器权限。");
+                    });
+                } else {
+                    alert("您的浏览器不支持 HLS 播放。");
+                }
+            } else {
+                // 尝试作为普通视频源加载
+                videoElement.src = streamUrl;
+                videoElement.load();
+                videoElement.play().catch(error => {
+                    console.error("视频播放失败:", error);
+                    alert("视频播放失败，请检查URL或浏览器权限。");
+                });
+            }
+        }
+
+        // 自动加载流
+        loadStream();
+
+        // 双击全屏功能
+        videoElement.addEventListener('dblclick', () => {
+            if (!document.fullscreenElement) {
+                const requestMethod = videoElement.requestFullscreen ||
+                                     videoElement.webkitRequestFullscreen ||
+                                     videoElement.mozRequestFullScreen ||
+                                     videoElement.msRequestFullscreen;
+                if (requestMethod) {
+                    requestMethod.call(videoElement);
+                }
+            } else {
+                const exitMethod = document.exitFullscreen ||
+                                  document.webkitExitFullscreen ||
+                                  document.mozCancelFullScreen ||
+                                  document.msExitFullscreen;
+                if (exitMethod) {
+                    exitMethod.call(document);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

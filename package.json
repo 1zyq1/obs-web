@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "express": "^5.1.0",
+    "node-media-server": "^4.0.18"
+  }
+}
