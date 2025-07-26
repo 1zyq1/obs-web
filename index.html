@@ -35,14 +35,6 @@
         const streamUrl = "[[FLV_STREAM_URL]]"; // 占位符
 
         function loadStream() {
-            if (streamUrl === "[[FLV_STREAM_URL]]") {
-                // 如果是占位符，则使用默认值或提示
-                console.warn("FLV_STREAM_URL 占位符未被替换，使用默认值。");
-                // 可以选择弹窗提示用户，或者使用一个硬编码的默认值
-                // alert("FLV 流URL未配置，请检查服务器设置。");
-                // return;
-            }
-
             if (streamUrl.endsWith('.flv')) {
                 if (flvjs.isSupported()) {
                     const flvPlayer = flvjs.createPlayer({
@@ -55,15 +47,12 @@
                         console.error("FLV 播放失败:", error);
                         if (error.name === 'NotAllowedError') {
                             alert("视频播放被浏览器阻止。请点击视频区域以播放。");
-                            // statusDiv.textContent = "请点击视频区域以播放。"; // statusDiv 已移除
                         } else {
                             alert("FLV 播放失败，请检查URL或浏览器权限。");
-                            // statusDiv.textContent = "FLV 播放失败，请检查URL或浏览器权限。"; // statusDiv 已移除
                         }
                     });
                     flvPlayer.on(flvjs.Events.ERROR, (errorType, errorDetail) => {
                         console.error('FLV.js error:', errorType, errorDetail);
-                        // statusDiv.textContent = `FLV 播放错误: ${errorType} - ${errorDetail}`; // statusDiv 已移除
                     });
                 } else {
                     alert("您的浏览器不支持 FLV 播放。");

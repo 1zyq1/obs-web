@@ -9,8 +9,9 @@
 *   **无默认控件：** 网页播放器不显示任何默认的视频控制条和进度条，提供纯净的观看体验。
 *   **双击全屏：** 双击视频区域即可快速切换全屏模式。
 *   **高度可配置：** 所有关键配置项都集中在 `config.json` 文件中，方便修改。
-*   **自动化启动：** 提供 `start.bat` 批处理文件，一键完成模块安装、服务器启动和网页打开。
+*   **自动化启动与重启：** 提供 `start.bat` 批处理文件，一键完成模块安装、服务器启动和网页打开。服务器关闭后（例如通过管理页面重启），会自动重新启动。
 *   **中文日志：** 服务器和批处理文件日志输出已汉化，方便理解。
+*   **网页配置管理：** 提供一个安全的网页界面，用于实时查看和修改 `config.json` 中的配置，并支持远程重启服务器。
 
 ## 🚀 快速开始
 
@@ -22,7 +23,6 @@
     *   下载地址：[https://obsproject.com/](https://obsproject.com/)
 3.  **FFmpeg (可选，仅用于 HLS/WebRTC 转码)：** 如果您未来需要 HLS 或 WebRTC 流，请确保已安装 FFmpeg。对于 FLV 流，FFmpeg 不是必需的。
     *   下载地址：[https://ffmpeg.org/download.html](https://ffmpeg.org/download.html)
-    *   **重要：** 如果您下载了预编译的 FFmpeg，请将 `ffmpeg.exe` (以及 `ffplay.exe`, `ffprobe.exe`) 复制到项目根目录下的 `ffmpeg/bin/` 文件夹中。例如：`./ffmpeg/bin/ffmpeg.exe`。
 
 ### 安装与运行
 
@@ -34,7 +34,7 @@
     这个批处理文件将自动完成以下操作：
     *   安装所需的 Node.js 模块 (`node-media-server` 和 `express`)。
     *   在一个新的终端窗口中启动 `server.js` (RTMP/HTTP 流媒体服务器)。
-    *   自动在您的默认浏览器中打开网页播放器 (`http://localhost:8002`)。
+    *   **服务器将持续运行，并在意外关闭或通过管理页面重启时自动重新启动。**
     *   **注意：** 运行 `start.bat` 后，命令行窗口中的中文输出应该会正常显示。
 
 ### OBS 配置
@@ -48,7 +48,7 @@
 
 ### 网页播放器使用
 
-1.  在您双击 `start.bat` 后，浏览器会自动打开网页播放器 (`http://localhost:8002`)。
+1.  请手动在浏览器中打开网页播放器 (`http://localhost:8002`)。
 2.  网页加载后，视频应该会**自动静音播放**。
 3.  **双击视频区域**即可切换全屏模式。
 
@@ -113,9 +113,22 @@
   "webPlayerPort": 8002,
   "_comment_webPlayerPort": "网页播放器访问端口，浏览器访问 http://localhost:8002",
   "flvStreamUrl": "http://localhost:8000/live/streamkey.flv",
-  "_comment_flvStreamUrl": "网页播放器默认加载的FLV流URL"
+  "_comment_flvStreamUrl": "网页播放器默认加载的FLV流URL",
+  "adminPassword": "your_admin_password",
+  "_comment_adminPassword": "管理页面访问密码，请务必修改"
 }
 ```
+
+## 🌐 网页配置管理
+
+在浏览器中访问 `http://localhost:8002/admin` (如果您的 `webPlayerPort` 是 8002)。
+
+*   **登录：** 使用 `config.json` 中设置的 `adminPassword` 进行登录。
+*   **查看与修改：** 登录后，您可以查看和修改所有配置项。
+*   **保存配置：** 修改后点击“保存配置”按钮。
+*   **重启服务器：** 保存配置后，请点击“重启服务器”按钮使更改生效。服务器将自动关闭并重新启动。
+
+**重要：** 首次运行或修改 `config.json` 后，请务必将 `adminPassword` 修改为一个强密码，以确保管理页面的安全。
 
 ## ⚠️ 注意事项
 

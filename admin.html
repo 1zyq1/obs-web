@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置管理</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; text-align: center; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], input[type="password"], textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover { background-color: #0056b3; }
+        .message { margin-top: 20px; padding: 10px; border-radius: 4px; }
+        .message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .login-container { text-align: center; margin-top: 50px; }
+        .login-container input { margin-bottom: 10px; }
+        .config-section { border: 1px solid #eee; padding: 15px; border-radius: 5px; margin-bottom: 20px; background-color: #f9f9f9; }
+        .config-section h2 { margin-top: 0; color: #333; font-size: 1.2em; }
+        .config-section input[type="checkbox"] { margin-right: 10px; }
+        .config-section .form-group label { display: inline-block; width: auto; margin-right: 10px; }
+        .config-section .form-group input { width: auto; display: inline-block; }
+        .config-section .array-item { margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px; background-color: #fff; }
+        .config-section .array-item button { margin-left: 10px; background-color: #dc3545; }
+        .add-button { background-color: #28a745; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>配置管理</h1>
+        <div id="login-section">
+            <div class="login-container">
+                <h2>管理员登录</h2>
+                <div class="form-group">
+                    <label for="adminPassword">密码:</label>
+                    <input type="password" id="adminPassword" placeholder="输入管理员密码">
+                </div>
+                <button onclick="login()">登录</button>
+                <div id="loginMessage" class="message"></div>
+            </div>
+        </div>
+
+        <div id="config-section" style="display: none;">
+            <div class="form-group">
+                <label for="currentPassword">当前管理员密码:</label>
+                <input type="password" id="currentPassword" placeholder="输入当前管理员密码">
+            </div>
+            <div class="form-group">
+                <label for="newAdminPassword">新管理员密码 (可选):</label>
+                <input type="password" id="newAdminPassword" placeholder="留空则不修改">
+            </div>
+
+            <div class="config-section">
+                <h2>RTMP 配置</h2>
+                <div class="form-group">
+                    <label for="rtmpPort">端口:</label>
+                    <input type="number" id="rtmpPort">
+                </div>
+                <div class="form-group">
+                    <label for="rtmpChunkSize">数据块大小:</label>
+                    <input type="number" id="rtmpChunkSize">
+                </div>
+                <div class="form-group">
+                    <label for="rtmpGopCache">GOP 缓存:</label>
+                    <input type="checkbox" id="rtmpGopCache">
+                </div>
+                <div class="form-group">
+                    <label for="rtmpPing">Ping 间隔 (秒):</label>
+                    <input type="number" id="rtmpPing">
+                </div>
+                <div class="form-group">
+                    <label for="rtmpPingTimeout">Ping 超时 (秒):</label>
+                    <input type="number" id="rtmpPingTimeout">
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h2>HTTP 配置</h2>
+                <div class="form-group">
+                    <label for="httpPort">端口:</label>
+                    <input type="number" id="httpPort">
+                </div>
+                <div class="form-group">
+                    <label for="httpAllowOrigin">允许跨域源:</label>
+                    <input type="text" id="httpAllowOrigin">
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h2>WebSocket 配置</h2>
+                <div class="form-group">
+                    <label for="webSocketPort">端口:</label>
+                    <input type="number" id="webSocketPort">
+                </div>
+                <div class="form-group">
+                    <label for="webSocketAllowOrigin">允许跨域源:</label>
+                    <input type="text" id="webSocketAllowOrigin">
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h2>转码配置</h2>
+                <div class="form-group">
+                    <label for="ffmpegPath">FFmpeg 路径:</label>
+                    <input type="text" id="ffmpegPath">
+                </div>
+                <h3>任务列表</h3>
+                <div id="transTasks"></div>
+                <button class="add-button" onclick="addTask()">添加任务</button>
+            </div>
+
+            <div class="config-section">
+                <h2>通用配置</h2>
+                <div class="form-group">
+                    <label for="streamKey">推流码:</label>
+                    <input type="text" id="streamKey">
+                </div>
+                <div class="form-group">
+                    <label for="webPlayerPort">网页播放器端口:</label>
+                    <input type="number" id="webPlayerPort">
+                </div>
+                <div class="form-group">
+                    <label for="flvStreamUrl">FLV 流 URL:</label>
+                    <input type="text" id="flvStreamUrl">
+                </div>
+            </div>
+
+            <button onclick="saveConfig()">保存配置</button>
+            <button onclick="restartServer()" style="background-color: #ffc107; color: #333;">重启服务器</button>
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfig = {};
+
+        function showMessage(msg, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = msg;
+            messageDiv.className = `message ${type}`;
+            // 如果是成功消息，延长显示时间，并添加重启提示
+            if (type === 'success') {
+                messageDiv.innerHTML += '<br>请点击“重启服务器”按钮使更改生效。';
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                    messageDiv.className = 'message';
+                }, 10000); // 延长显示时间
+            } else {
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                    messageDiv.className = 'message';
+                }, 5000);
+            }
+        }
+
+        function showLoginMessage(msg, type) {
+            const loginMessageDiv = document.getElementById('loginMessage');
+            loginMessageDiv.textContent = msg;
+            loginMessageDiv.className = `message ${type}`;
+            setTimeout(() => {
+                loginMessageDiv.textContent = '';
+                loginMessageDiv.className = 'message';
+            }, 3000);
+        }
+
+        async function login() {
+            const password = document.getElementById('adminPassword').value;
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('config-section').style.display = 'block';
+                    showLoginMessage('登录成功！', 'success');
+                    loadConfig();
+                } else {
+                    showLoginMessage(data.message || '登录失败', 'error');
+                }
+            } catch (error) {
+                showLoginMessage('网络错误或服务器无响应', 'error');
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const password = document.getElementById('adminPassword').value; // 使用登录时输入的密码
+                const response = await fetch('/api/config', {
+                    headers: {
+                        'Authorization': `Bearer ${password}`
+                    }
+                });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showLoginMessage('未授权，请重新登录。', 'error');
+                        document.getElementById('login-section').style.display = 'block';
+                        document.getElementById('config-section').style.display = 'none';
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                currentConfig = await response.json();
+                populateForm(currentConfig);
+            } catch (error) {
+                showMessage('加载配置失败: ' + error.message, 'error');
+            }
+        }
+
+        function populateForm(config) {
+            document.getElementById('rtmpPort').value = config.rtmp.port;
+            document.getElementById('rtmpChunkSize').value = config.rtmp.chunk_size;
+            document.getElementById('rtmpGopCache').checked = config.rtmp.gop_cache;
+            document.getElementById('rtmpPing').value = config.rtmp.ping;
+            document.getElementById('rtmpPingTimeout').value = config.rtmp.ping_timeout;
+
+            document.getElementById('httpPort').value = config.http.port;
+            document.getElementById('httpAllowOrigin').value = config.http.allow_origin;
+
+            document.getElementById('webSocketPort').value = config.webSocket.port;
+            document.getElementById('webSocketAllowOrigin').value = config.webSocket.allow_origin;
+
+            document.getElementById('ffmpegPath').value = config.trans.ffmpegPath;
+            renderTasks(config.trans.tasks);
+
+            document.getElementById('streamKey').value = config.streamKey;
+            document.getElementById('webPlayerPort').value = config.webPlayerPort;
+            document.getElementById('flvStreamUrl').value = config.flvStreamUrl;
+        }
+
+        function renderTasks(tasks) {
+            const transTasksDiv = document.getElementById('transTasks');
+            transTasksDiv.innerHTML = '';
+            tasks.forEach((task, index) => {
+                const taskDiv = document.createElement('div');
+                taskDiv.className = 'array-item';
+                taskDiv.innerHTML = `
+                    <h4>任务 ${index + 1}</h4>
+                    <div class="form-group"><label>应用:</label><input type="text" data-task-index="${index}" data-field="app" value="${task.app}"></div>
+                    <div class="form-group"><label>视频编码器:</label><input type="text" data-task-index="${index}" data-field="vc" value="${task.vc}"></div>
+                    <div class="form-group"><label>视频编码参数 (JSON 数组):</label><textarea data-task-index="${index}" data-field="vcParam">${JSON.stringify(task.vcParam)}</textarea></div>
+                    <div class="form-group"><label>音频编码器:</label><input type="text" data-task-index="${index}" data-field="ac" value="${task.ac}"></div>
+                    <div class="form-group"><label>音频编码参数 (JSON 数组):</label><textarea data-task-index="${index}" data-field="acParam">${JSON.stringify(task.acParam)}</textarea></div>
+                    <div class="form-group"><label>启用 RTMP 转发:</label><input type="checkbox" data-task-index="${index}" data-field="rtmp" ${task.rtmp ? 'checked' : ''}></div>
+                    <div class="form-group"><label>RTMP 转发应用:</label><input type="text" data-task-index="${index}" data-field="rtmpApp" value="${task.rtmpApp}"></div>
+                    <div class="form-group"><label>启用 WebRTC 转码:</label><input type="checkbox" data-task-index="${index}" data-field="webrtc" ${task.webrtc ? 'checked' : ''}></div>
+                    <button onclick="removeTask(${index})">删除任务</button>
+                `;
+                transTasksDiv.appendChild(taskDiv);
+            });
+        }
+
+        function addTask() {
+            const newTask = {
+                app: "live",
+                vc: "libx264",
+                vcParam: ["-preset", "fast", "-crf", "1", "-profile:v", "main", "-level", "3.1"],
+                ac: "aac",
+                acParam: ["-ab", "128k", "-ar", "44100", "-ac", "2"],
+                rtmp: true,
+                rtmpApp: "live",
+                webrtc: true
+            };
+            currentConfig.trans.tasks.push(newTask);
+            renderTasks(currentConfig.trans.tasks);
+        }
+
+        function removeTask(index) {
+            currentConfig.trans.tasks.splice(index, 1);
+            renderTasks(currentConfig.trans.tasks);
+        }
+
+        async function saveConfig() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newAdminPassword = document.getElementById('newAdminPassword').value;
+
+            if (!currentPassword) {
+                showMessage('请输入当前管理员密码！', 'error');
+                return;
+            }
+
+            const updatedConfig = {
+                rtmp: {
+                    port: parseInt(document.getElementById('rtmpPort').value),
+                    chunk_size: parseInt(document.getElementById('rtmpChunkSize').value),
+                    gop_cache: document.getElementById('rtmpGopCache').checked,
+                    ping: parseInt(document.getElementById('rtmpPing').value),
+                    ping_timeout: parseInt(document.getElementById('rtmpPingTimeout').value)
+                },
+                http: {
+                    port: parseInt(document.getElementById('httpPort').value),
+                    allow_origin: document.getElementById('httpAllowOrigin').value
+                },
+                webSocket: {
+                    port: parseInt(document.getElementById('webSocketPort').value),
+                    allow_origin: document.getElementById('webSocketAllowOrigin').value
+                },
+                trans: {
+                    ffmpegPath: document.getElementById('ffmpegPath').value,
+                    tasks: []
+                },
+                streamKey: document.getElementById('streamKey').value,
+                webPlayerPort: parseInt(document.getElementById('webPlayerPort').value),
+                flvStreamUrl: document.getElementById('flvStreamUrl').value,
+                adminPassword: newAdminPassword || currentConfig.adminPassword // 如果新密码为空，则保留旧密码
+            };
+
+            // Collect tasks
+            const taskElements = document.querySelectorAll('#transTasks .array-item');
+            taskElements.forEach(taskDiv => {
+                const task = {};
+                taskDiv.querySelectorAll('input, textarea').forEach(input => {
+                    const field = input.dataset.field;
+                    if (input.type === 'checkbox') {
+                        task[field] = input.checked;
+                    } else if (input.tagName === 'TEXTAREA') {
+                        try {
+                            task[field] = JSON.parse(input.value);
+                        } catch (e) {
+                            task[field] = []; // Fallback to empty array
+                        }
+                    } else {
+                        task[field] = input.value;
+                    }
+                });
+                updatedConfig.trans.tasks.push(task);
+            });
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentPassword}`
+                    },
+                    body: JSON.stringify(updatedConfig)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('配置保存成功！', 'success');
+                    // Reload config to reflect any changes (e.g., if new password was set)
+                    loadConfig();
+                } else {
+                    showMessage(data.message || '保存配置失败', 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误或服务器无响应', 'error');
+            }
+        }
+
+        async function restartServer() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            if (!currentPassword) {
+                showMessage('请输入当前管理员密码才能重启服务器！', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/api/restart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentPassword}`
+                    }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('服务器重启请求已发送。请等待几秒钟。', 'success');
+                } else {
+                    showMessage(data.message || '重启服务器失败', 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误或服务器无响应', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
